@@ -1,7 +1,12 @@
 defmodule TT.Input do
   def spin() do
-    char = ExNcurses.getchar
-    TT.Cli.input([char])
+    ExNcurses.flushinp
+    char = ExNcurses.getch
+    if(char != -1) do
+      IO.puts "Input received"
+      TT.CLI.input([char])
+    end
+    #ExNcurses.refresh
     spin()
   end
 end

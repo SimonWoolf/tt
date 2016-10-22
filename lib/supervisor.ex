@@ -7,8 +7,8 @@ defmodule TT.Supervisor do
 
   def init([]) do
     children = [
-      worker(TT.Controller, [:foo]),
-      worker(TT.Cli, [:foo])
+      worker(TT.Controller, []),
+      worker(TT.CLI, [])
     ]
 
     supervise(children, strategy: :one_for_one)
