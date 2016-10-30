@@ -1,15 +1,44 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    activesupport (4.2.6)
+      i18n (~> 0.7)
+      json (~> 1.7, >= 1.7.7)
+      minitest (~> 5.1)
+      thread_safe (~> 0.3, >= 0.3.4)
+      tzinfo (~> 1.1)
+    beeminder (0.2.10)
+      activesupport (>= 3.2, < 5)
+      chronic (~> 0.7)
+      highline (~> 1.6)
+      json
+      trollop (~> 2)
+      tzinfo
+    chronic (0.10.2)
+    colorize (0.8.1)
     concurrent-ruby (1.0.2)
     concurrent-ruby-edge (0.2.2)
       concurrent-ruby (~> 1.0.2)
+    ffi (1.9.14)
+    highline (1.7.8)
+    i18n (0.7.0)
+    json (1.8.3)
+    libnotify (0.9.1)
+      ffi (>= 1.0.11)
+    minitest (5.9.1)
+    thread_safe (0.3.5)
+    trollop (2.1.2)
+    tzinfo (1.2.2)
+      thread_safe (~> 0.1)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
+  beeminder
+  colorize
   concurrent-ruby-edge
+  libnotify
 
 BUNDLED WITH
-   1.12.5
+   1.13.6
