@@ -39,6 +39,9 @@ class Controller < Concurrent::Actor::Context
     when :working, :break, :procrastinating
       set_status(msg)
 
+    when :refresh
+      show_update
+
     when :info
       @state[:prompt] << "\n"
       @state[:prompt] << payload

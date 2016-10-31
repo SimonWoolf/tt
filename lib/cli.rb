@@ -19,5 +19,7 @@ loop do
     controller.tell(:break)
   when ?p
     controller.tell(:procrastinating)
+  when ' '
+    controller.tell(:refresh)
   end
 end
