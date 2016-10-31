@@ -4,6 +4,8 @@ require_relative 'beeminder'
 PERIOD_SECS = 5
 PERIODS_PER_POMODORO = (25 * 60) / PERIOD_SECS
 PERIODS_PER_BREAK = (5 * 60) / PERIOD_SECS
+DING_SOUND = '/home/simon/dev/dotfiles/pomodoro-finish.wav'
+DING_SPEED = 5
 
 def periods_to_minutes(periods)
   (periods * PERIOD_SECS) / 60
@@ -97,8 +99,10 @@ class Controller < Concurrent::Actor::Context
 
     if working? && periods_in_state >= PERIODS_PER_POMODORO && !prompt
       @state[:prompt] = "Take a break".bold.white
+      play_ding
     elsif break? && periods_in_state >= PERIODS_PER_BREAK && !prompt
       @state[:prompt] = "Break over".bold.white
+      play_ding
     end
   end
 
@@ -120,6 +124,12 @@ class Controller < Concurrent::Actor::Context
       working: :light_green,
       break: :light_blue
     }[@state[:status]]
+  end
+
+  def play_ding
+    fork do
+      exec 'mplayer', DING_SOUND, '-speed', DING_SPEED
+    end
   end
 end
 
