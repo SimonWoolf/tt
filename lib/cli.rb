@@ -2,6 +2,9 @@ require 'io/console'
 require 'concurrent-edge'
 require_relative 'controller'
 
+# Set title of the terminal
+system("printf \"\033]0;tt\007\"")
+
 controller = Controller.spawn(:controller)
 
 loop do
