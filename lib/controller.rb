@@ -67,11 +67,19 @@ class Controller < Concurrent::Actor::Context
     if initialized?
       p "time tracker".white.bold
     else
-      p "#{@state[:status]}: #{periods_to_minutes(@state[:periods_in_state])} minutes".bold.send(state_color)
+      p "#{status}: #{periods_to_minutes(periods_in_state)} minutes#{pomodoro_proportion}".bold.send(state_color)
     end
 
     if prompt
       p prompt
+    end
+  end
+
+  def pomodoro_proportion
+    if working?
+      " (pom: #{100 * work_pomodoro_periods / PERIODS_PER_POMODORO}%)"
+    else
+      ''
     end
   end
 
