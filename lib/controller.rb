@@ -128,7 +128,7 @@ class Controller < Concurrent::Actor::Context
 
   def play_ding
     fork do
-      exec 'mplayer', DING_SOUND, '-speed', DING_SPEED
+      exec 'mplayer', DING_SOUND, '-speed', DING_SPEED.to_s
     end
   end
 end
