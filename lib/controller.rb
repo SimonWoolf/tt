@@ -127,9 +127,11 @@ class Controller < Concurrent::Actor::Context
   end
 
   def play_ding
-    fork do
-      exec 'mplayer', DING_SOUND, '-speed', DING_SPEED.to_s
-    end
+    spawn(
+      'mplayer', DING_SOUND, '-speed', DING_SPEED.to_s,
+      out: '/dev/null',
+      err: '/dev/null'
+    )
   end
 end
 
