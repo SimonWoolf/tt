@@ -38,7 +38,7 @@ class Controller < Concurrent::Actor::Context
       on_tick
       show_update
 
-    when :working, :break, :procrastinating
+    when :working, :break, :procrastinating, :non_work
       set_status(msg)
 
     when :refresh
@@ -97,13 +97,17 @@ class Controller < Concurrent::Actor::Context
       @state[:work_pomodoro_periods] = 0
     end
 
-    if working? && periods_in_state >= PERIODS_PER_POMODORO && !prompt
+    if counting_pomodoros? && periods_in_state >= PERIODS_PER_POMODORO && !prompt
       @state[:prompt] = "Take a break".bold.white
       play_ding
     elsif break? && periods_in_state >= PERIODS_PER_BREAK && !prompt
       @state[:prompt] = "Break over".bold.white
       play_ding
     end
+  end
+
+  def counting_pomodoros?
+    working? || non_work?
   end
 
   def cls
@@ -122,8 +126,9 @@ class Controller < Concurrent::Actor::Context
     {
       initialized: :white,
       working: :light_green,
-      break: :light_blue
-    }[@state[:status]]
+      break: :light_blue,
+      non_work: :light_cyan
+    }[@state[:status]] || :white
   end
 
   def play_ding

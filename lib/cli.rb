@@ -15,6 +15,8 @@ loop do
     exit
   when ?w
     controller.tell(:working)
+  when ?n
+    controller.tell(:non_work)
   when ?b
     controller.tell(:break)
   when ?p
