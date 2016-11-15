@@ -132,7 +132,7 @@ class Controller < Concurrent::Actor::Context
   end
 
   def play_ding
-    spawn(
+    Process.spawn(
       'mplayer', DING_SOUND, '-speed', DING_SPEED.to_s,
       out: '/dev/null',
       err: '/dev/null'
