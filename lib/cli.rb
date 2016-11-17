@@ -7,6 +7,12 @@ system("printf \"\033]0;tt\007\"")
 
 controller = Controller.spawn(:controller)
 
+Signal.trap("WINCH") do
+  Thread.new do
+    controller.tell(:refresh)
+  end
+end
+
 loop do
   case STDIN.getch
   when "\u0003"
