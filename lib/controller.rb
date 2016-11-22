@@ -17,21 +17,19 @@ end
 
 class Controller < Concurrent::Actor::Context
   def initialize(options)
-    @timer = Concurrent::TimerTask.new(execution_interval: PERIOD_SECS, run_now: true) {
+    @timer = Concurrent::TimerTask.new(execution_interval: PERIOD_SECS, run_now: true) do
       self.tell(:tick)
-    }
+    end
     @timer.execute
 
-    @state = {
-      status: :initialized,
-      mode: options[:mode] || :internet,
-      periods_in_state: 0,
-      work_pomodoro_periods: 0,
-      accumulated_work_pomodoros: 0,
-      prompt: nil
-    }
+    @status = :initialized
+    @mode = options[:mode] || :internet
+    @periods_in_state = 0
+    @work_pomodoro_periods = 0
+    @accumulated_work_pomodoros = 0
+    @prompt= nil
 
-    if @state[:mode] == :internet
+    if @mode == :internet
       @bee = Beemind.spawn(:bee)
     end
   end
@@ -49,22 +47,22 @@ class Controller < Concurrent::Actor::Context
       show_update
 
     when :info
-      @state[:prompt] = "\n#{payload}"
+      @prompt = "\n#{payload}"
       show_update
 
     when :local_mode
-      @state[:mode] = :local
-      @state[:prompt] = "(local mode)"
+      @mode = :local
+      @prompt = "(local mode)"
       show_update
 
     when :internet_mode
-      @state[:mode] = :internet
+      @mode = :internet
       @bee ||= Beemind.spawn(:bee)
-      accumulated_work_pomodoros.times do
+      @accumulated_work_pomodoros.times do
         @bee.tell(:submit_work_pomodoro)
       end
-      @state[:accumulated_work_pomodoros] = 0
-      @state[:prompt] = "(internet mode)"
+      @accumulated_work_pomodoros = 0
+      @prompt = "(internet mode)"
       show_update
 
     when Array
@@ -73,10 +71,10 @@ class Controller < Concurrent::Actor::Context
   end
 
   def set_status(msg)
-    if status != msg
-      @state[:status] = msg
-      @state[:periods_in_state] = 0
-      @state[:prompt] = nil
+    if @status != msg
+      @status = msg
+      @periods_in_state = 0
+      @prompt = nil
       show_update
     end
   end
@@ -87,51 +85,51 @@ class Controller < Concurrent::Actor::Context
     if initialized?
       p "time tracker".white.bold
     else
-      p "#{status}: #{periods_to_minutes(periods_in_state)} minutes#{pomodoro_proportion}#{accumulation}".bold.send(state_color)
+      p "#{@status}: #{periods_to_minutes(@periods_in_state)} minutes#{pomodoro_proportion}#{accumulation}".bold.send(state_color)
     end
 
-    if prompt
-      p prompt
+    if @prompt
+      p @prompt
     end
   end
 
   def pomodoro_proportion
     if working?
-      " (pom: #{100 * work_pomodoro_periods / PERIODS_PER_POMODORO}%)"
+      " (pom: #{100 * @work_pomodoro_periods / PERIODS_PER_POMODORO}%)"
     else
       ''
     end
   end
 
   def accumulation
-    if mode == :local
-      " (accumulated: #{accumulated_work_pomodoros})"
+    if @mode == :local
+      " (accumulated: #{@accumulated_work_pomodoros})"
     else
       ''
     end
   end
 
   def on_tick
-    @state[:periods_in_state] += 1
+    @periods_in_state += 1
 
     if working?
-      @state[:work_pomodoro_periods] += 1
+      @work_pomodoro_periods += 1
     end
 
-    if work_pomodoro_periods >= PERIODS_PER_POMODORO
-      @state[:work_pomodoro_periods] = 0
-      if mode == :internet && @bee
+    if @work_pomodoro_periods >= PERIODS_PER_POMODORO
+      @work_pomodoro_periods = 0
+      if (@mode == :internet) && @bee
         @bee.tell(:submit_work_pomodoro)
       else
-        @state[:accumulated_work_pomodoros] += 1
+        @accumulated_work_pomodoros += 1
       end
     end
 
-    if counting_pomodoros? && periods_in_state >= PERIODS_PER_POMODORO && !prompt
-      @state[:prompt] = "Take a break".bold.white
+    if counting_pomodoros? && @periods_in_state >= PERIODS_PER_POMODORO && !@prompt
+      @prompt = "Take a break".bold.white
       play_ding
-    elsif break? && periods_in_state >= PERIODS_PER_BREAK && !prompt
-      @state[:prompt] = "Break over".bold.white
+    elsif break? && @periods_in_state >= PERIODS_PER_BREAK && !@prompt
+      @prompt = "Break over".bold.white
       play_ding
     end
   end
@@ -146,9 +144,7 @@ class Controller < Concurrent::Actor::Context
 
   def method_missing(method, *args, &block)
     if method[-1] == ??
-      @state[:status] == method[0..-2].to_sym
-    elsif @state[method]
-      @state[method]
+      @status == method[0..-2].to_sym
     end
   end
 
@@ -158,7 +154,7 @@ class Controller < Concurrent::Actor::Context
       working: :light_green,
       break: :light_blue,
       non_work: :light_cyan
-    }[@state[:status]] || :white
+    }[@status] || :white
   end
 
   def play_ding
