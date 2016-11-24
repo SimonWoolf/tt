@@ -15,6 +15,10 @@ def p(str)
   puts(str + "\r")
 end
 
+def p_nonewline(str)
+  print(str + "\r")
+end
+
 class Controller < Concurrent::Actor::Context
   def initialize(options)
     @timer = Concurrent::TimerTask.new(execution_interval: PERIOD_SECS, run_now: true) do
@@ -89,7 +93,8 @@ class Controller < Concurrent::Actor::Context
     end
 
     if @prompt
-      p @prompt
+      # print without a newline so doesn't push first line out of the window for 2-line terminals
+      p_nonewline @prompt
     end
   end
 
