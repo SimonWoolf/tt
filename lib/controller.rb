@@ -30,7 +30,7 @@ class Controller < Concurrent::Actor::Context
     @mode = options[:mode] || :internet
     @periods_in_state = 0
     @work_pomodoro_periods = 0
-    @accumulated_work_pomodoros = 0
+    @unsubmitted_work_pomodoros = 0
     @prompt= nil
 
     if @mode == :internet
@@ -62,10 +62,10 @@ class Controller < Concurrent::Actor::Context
     when :internet_mode
       @mode = :internet
       @bee ||= Beemind.spawn(:bee)
-      @accumulated_work_pomodoros.times do
+      @unsubmitted_work_pomodoros.times do
         @bee.tell(:submit_work_pomodoro)
       end
-      @accumulated_work_pomodoros = 0
+      @unsubmitted_work_pomodoros = 0
       @prompt = "(internet mode)"
       show_update
 
@@ -108,7 +108,7 @@ class Controller < Concurrent::Actor::Context
 
   def accumulation
     if @mode == :local
-      " (accumulated: #{@accumulated_work_pomodoros})"
+      " (accumulated: #{@unsubmitted_work_pomodoros})"
     else
       ''
     end
@@ -126,7 +126,7 @@ class Controller < Concurrent::Actor::Context
       if (@mode == :internet) && @bee
         @bee.tell(:submit_work_pomodoro)
       else
-        @accumulated_work_pomodoros += 1
+        @unsubmitted_work_pomodoros += 1
       end
     end
 
