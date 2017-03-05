@@ -6,6 +6,8 @@ PERIODS_PER_POMODORO = (25 * 60) / PERIOD_SECS
 PERIODS_PER_BREAK = (5 * 60) / PERIOD_SECS
 DING_SOUND = '/home/simon/dev/dotfiles/pomodoro-finish.wav'
 DING_SPEED = 5
+SLOW_DING_SPEED = 2
+MAX_DAILY_POMODOROS = 14
 
 def periods_to_minutes(periods)
   (periods * PERIOD_SECS) / 60
@@ -31,6 +33,7 @@ class Controller < Concurrent::Actor::Context
     @periods_in_state = 0
     @work_pomodoro_periods = 0
     @unsubmitted_work_pomodoros = 0
+    @work_pomodoros_done_today = 0
     @prompt= nil
 
     if @mode == :internet
@@ -123,6 +126,7 @@ class Controller < Concurrent::Actor::Context
 
     if @work_pomodoro_periods >= PERIODS_PER_POMODORO
       @work_pomodoro_periods = 0
+      @work_pomodoros_done_today += 1;
       if (@mode == :internet) && @bee
         @bee.tell(:submit_work_pomodoro)
       else
@@ -132,7 +136,7 @@ class Controller < Concurrent::Actor::Context
 
     if counting_pomodoros? && @periods_in_state >= PERIODS_PER_POMODORO && !@prompt
       @prompt = "Take a break".bold.white
-      play_ding
+      play_ding(slow: working? && enough_work?)
     elsif break? && @periods_in_state >= PERIODS_PER_BREAK && !@prompt
       @prompt = "Break over".bold.white
       play_ding
@@ -141,6 +145,10 @@ class Controller < Concurrent::Actor::Context
 
   def counting_pomodoros?
     working? || non_work?
+  end
+
+  def enough_work?
+    @work_pomodoros_done_today >= MAX_DAILY_POMODOROS
   end
 
   def cls
@@ -162,9 +170,10 @@ class Controller < Concurrent::Actor::Context
     }[@status] || :white
   end
 
-  def play_ding
+  def play_ding(slow: false)
+    speed = slow ? SLOW_DING_SPEED : DING_SPEED
     Process.spawn(
-      'mplayer', DING_SOUND, '-speed', DING_SPEED.to_s,
+      'mplayer', DING_SOUND, '-speed', speed.to_s,
       out: '/dev/null',
       err: '/dev/null'
     )
