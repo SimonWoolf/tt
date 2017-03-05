@@ -125,13 +125,7 @@ class Controller < Concurrent::Actor::Context
     end
 
     if @work_pomodoro_periods >= PERIODS_PER_POMODORO
-      @work_pomodoro_periods = 0
-      @work_pomodoros_done_today += 1;
-      if (@mode == :internet) && @bee
-        @bee.tell(:submit_work_pomodoro)
-      else
-        @unsubmitted_work_pomodoros += 1
-      end
+      finish_a_work_pomodoro
     end
 
     if counting_pomodoros? && @periods_in_state >= PERIODS_PER_POMODORO && !@prompt
@@ -140,6 +134,16 @@ class Controller < Concurrent::Actor::Context
     elsif break? && @periods_in_state >= PERIODS_PER_BREAK && !@prompt
       @prompt = "Break over".bold.white
       play_ding
+    end
+  end
+
+  def finish_a_work_pomodoro
+    @work_pomodoro_periods = 0
+    @work_pomodoros_done_today += 1;
+    if (@mode == :internet) && @bee
+      @bee.tell(:submit_work_pomodoro)
+    else
+      @unsubmitted_work_pomodoros += 1
     end
   end
 
