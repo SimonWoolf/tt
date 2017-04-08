@@ -3,17 +3,19 @@ require 'concurrent-edge'
 require_relative 'controller'
 require_relative 'cli_input_handler'
 require_relative 'socket_input_handler'
+require_relative 'terminal_output'
+require_relative 'i3status_file_output'
 
 options = {}
 if ARGV.include?("-l") || ARGV.include?("--local")
   options[:mode] = :local
 end
 
-input_handler = if ARGV.include?("-s") || ARGV.include?("--socket")
-  SocketInputHandler
+input_handler, options[:outputs] = if ARGV.include?("-s") || ARGV.include?("--socket")
+  [SocketInputHandler.new, [I3statusFileOutput]]
 else
-  CliInputHandler
-end.new
+  [CliInputHandler.new, [TerminalOutput]]
+end
 
 controller = Controller.spawn(:controller, options)
 

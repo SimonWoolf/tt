@@ -1,6 +1,4 @@
 require_relative 'beeminder'
-require_relative 'terminal_output'
-require_relative 'i3status_file_output'
 
 PERIOD_SECS = 5
 PERIODS_PER_POMODORO = (25 * 60) / PERIOD_SECS
@@ -33,10 +31,9 @@ class Controller < Concurrent::Actor::Context
       @bee = Beemind.spawn(:bee)
     end
 
-    @outputs = [
-      TerminalOutput.spawn(:terminaloutput),
-      I3statusFileOutput.spawn(:i3statusfileoutput)
-    ]
+    @outputs = options[:outputs].map do |output|
+      output.spawn(output.to_s)
+    end
   end
 
   def on_message(msg, payload=nil)
