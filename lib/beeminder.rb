@@ -22,7 +22,7 @@ class Beemind < Concurrent::Actor::Context
         @bee.send("work", 1, "Submitted by tt #{Time.now}")
         Libnotify.show(body: "Pomodoro submitted", summary: nil, timeout: 5)
       rescue RuntimeError => e
-        self.parent.tell [:info, "Failed to submit pomodoro: #{e.inspect}".bold.red]
+        self.parent.tell [:info, ["Failed to submit pomodoro: #{e.to_s}", :red]]
       end
     end
   end

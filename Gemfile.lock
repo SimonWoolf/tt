@@ -15,6 +15,7 @@ GEM
       trollop (~> 2)
       tzinfo
     chronic (0.10.2)
+    color (1.8)
     colorize (0.8.1)
     concurrent-ruby (1.0.2)
     concurrent-ruby-edge (0.2.2)
@@ -36,9 +37,10 @@ PLATFORMS
 
 DEPENDENCIES
   beeminder
+  color
   colorize
   concurrent-ruby-edge
   libnotify
 
 BUNDLED WITH
-   1.13.6
+   1.14.3
