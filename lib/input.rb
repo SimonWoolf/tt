@@ -1,14 +1,19 @@
 require 'io/console'
 require 'concurrent-edge'
 require_relative 'controller'
-
-# Set title of the terminal
-system("printf \"\033]0;tt\007\"")
+require_relative 'cli_input_handler'
+require_relative 'socket_input_handler'
 
 options = {}
 if ARGV.include?("-l") || ARGV.include?("--local")
   options[:mode] = :local
 end
+
+input_handler = if ARGV.include?("-s") || ARGV.include?("--socket")
+  SocketInputHandler
+else
+  CliInputHandler
+end.new
 
 controller = Controller.spawn(:controller, options)
 
@@ -19,7 +24,7 @@ Signal.trap("WINCH") do
 end
 
 loop do
-  case STDIN.getch
+  case input_handler.get_input()
   when "\u0003"
     exit
   when ?q
