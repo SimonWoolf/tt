@@ -1,5 +1,7 @@
 require 'colorize'
 require_relative 'beeminder'
+require_relative 'terminal_output'
+require_relative 'file_output'
 
 PERIOD_SECS = 5
 PERIODS_PER_POMODORO = (25 * 60) / PERIOD_SECS
@@ -11,14 +13,6 @@ MAX_DAILY_POMODOROS = 14
 
 def periods_to_minutes(periods)
   (periods * PERIOD_SECS) / 60
-end
-
-def p(str)
-  puts(str + "\r")
-end
-
-def p_nonewline(str)
-  print(str + "\r")
 end
 
 class Controller < Concurrent::Actor::Context
@@ -34,11 +28,16 @@ class Controller < Concurrent::Actor::Context
     @work_pomodoro_periods = 0
     @unsubmitted_work_pomodoros = 0
     @work_pomodoros_done_today = 0
-    @prompt= nil
+    @prompt = ""
 
     if @mode == :internet
       @bee = Beemind.spawn(:bee)
     end
+
+    @outputs = [
+      TerminalOutput.spawn(:terminalout),
+      FileOutput.spawn(:fileout)
+    ]
   end
 
   def on_message(msg, payload=nil)
@@ -54,12 +53,12 @@ class Controller < Concurrent::Actor::Context
       show_update
 
     when :info
-      @prompt = "\n#{payload}"
+      @prompt = "— #{payload}"
       show_update
 
     when :local_mode
       @mode = :local
-      @prompt = "(local mode)"
+      @prompt = " (local mode)"
       show_update
 
     when :internet_mode
@@ -69,7 +68,7 @@ class Controller < Concurrent::Actor::Context
         @bee.tell(:submit_work_pomodoro)
       end
       @unsubmitted_work_pomodoros = 0
-      @prompt = "(internet mode)"
+      @prompt = " (internet mode)"
       show_update
 
     when Array
@@ -81,23 +80,20 @@ class Controller < Concurrent::Actor::Context
     if @status != msg
       @status = msg
       @periods_in_state = 0
-      @prompt = nil
+      @prompt = ""
       show_update
     end
   end
 
   def show_update()
-    cls
-
-    if initialized?
-      p "time tracker".white.bold
+    update = if initialized?
+      "time tracker".white.bold
     else
-      p "#{@status}: #{periods_to_minutes(@periods_in_state)} minutes#{pomodoro_proportion}#{accumulation}".bold.send(state_color)
-    end
+      "#{@status}: #{periods_to_minutes(@periods_in_state)} minutes#{pomodoro_proportion}#{accumulation}".bold.send(state_color)
+    end + @prompt
 
-    if @prompt
-      # print without a newline so doesn't push first line out of the window for 2-line terminals
-      p_nonewline @prompt
+    @outputs.each do |output|
+      output.tell update
     end
   end
 
@@ -129,10 +125,10 @@ class Controller < Concurrent::Actor::Context
     end
 
     if counting_pomodoros? && @periods_in_state >= PERIODS_PER_POMODORO && !@prompt
-      @prompt = "Take a break".bold.white
-      play_ding(slow: working? && enough_work?)
+      @prompt = " — take a break".bold.white
+      play_ding
     elsif break? && @periods_in_state >= PERIODS_PER_BREAK && !@prompt
-      @prompt = "Break over".bold.white
+      @prompt = " — Break over".bold.white
       play_ding
     end
   end
@@ -183,4 +179,3 @@ class Controller < Concurrent::Actor::Context
     )
   end
 end
-
