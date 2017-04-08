@@ -39,8 +39,13 @@ class Controller < Concurrent::Actor::Context
   def on_message(msg, payload=nil)
     case msg
     when :tick
-      on_tick
-      show_update
+      unless disabled?
+        on_tick
+        show_update
+      end
+
+    when :disabled
+      disable()
 
     when :working, :break, :procrastinating, :non_work
       set_status(msg)
@@ -90,6 +95,13 @@ class Controller < Concurrent::Actor::Context
 
     @outputs.each do |output|
       output.tell update
+    end
+  end
+
+  def disable()
+    @status = :disabled
+    @outputs.each do |output|
+      output.tell [["", :white]]
     end
   end
 

@@ -45,5 +45,7 @@ loop do
     controller.tell(:local_mode)
   when 'i'
     controller.tell(:internet_mode)
+  when 'd'
+    controller.tell(:disabled)
   end
 end
