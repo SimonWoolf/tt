@@ -11,7 +11,11 @@ class Beemind < Concurrent::Actor::Context
     if BEEMINDER_TOKEN.nil?
       raise "No beeminder token!"
     else
-      @bee = Beeminder::User.new(BEEMINDER_TOKEN)
+      begin
+        @bee = Beeminder::User.new(BEEMINDER_TOKEN)
+      rescue StandardError => e
+        self.parent.tell [:info, ["Failed to initialize beeminder: #{e.to_s}", :red]]
+      end
     end
   end
 
