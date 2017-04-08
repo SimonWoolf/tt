@@ -6,4 +6,4 @@ ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../Gemfile",
 
 require 'bundler/setup'
 
-require_relative 'lib/cli'
+require_relative 'lib/input'
