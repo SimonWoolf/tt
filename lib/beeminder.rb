@@ -8,7 +8,7 @@ BEEMINDER_TOKEN = ENV['BEEMINDER_TOKEN']
 
 class Beemind < Concurrent::Actor::Context
   def initialize()
-    if BEEMINDER_TOKEN.empty?
+    if BEEMINDER_TOKEN.nil?
       raise "No beeminder token!"
     else
       @bee = Beeminder::User.new(BEEMINDER_TOKEN)
