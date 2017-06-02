@@ -41,10 +41,6 @@ loop do
     controller.tell(:procrastinating)
   when ' '
     controller.tell(:refresh)
-  when 'l'
-    controller.tell(:local_mode)
-  when 'i'
-    controller.tell(:internet_mode)
   when 'd'
     controller.tell(:disabled)
   end

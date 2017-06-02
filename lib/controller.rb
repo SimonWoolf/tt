@@ -1,4 +1,3 @@
-require_relative 'beeminder'
 
 PERIOD_SECS = 5
 PERIODS_PER_POMODORO = (25 * 60) / PERIOD_SECS
@@ -20,16 +19,11 @@ class Controller < Concurrent::Actor::Context
     @timer.execute
 
     @status = :initialized
-    @mode = options[:mode] || :internet
     @periods_in_state = 0
     @work_pomodoro_periods = 0
-    @unsubmitted_work_pomodoros = 0
+    @time_of_last_work_pomodoro_period = Time.now
     @work_pomodoros_done_today = 0
     @prompt = []
-
-    if @mode == :internet
-      @bee = Beemind.spawn(:bee)
-    end
 
     @outputs = options[:outputs].map do |output|
       output.spawn(output.to_s)
@@ -55,21 +49,6 @@ class Controller < Concurrent::Actor::Context
 
     when :info
       @prompt = [payload]
-      show_update
-
-    when :local_mode
-      @mode = :local
-      @prompt = [[" (local mode)", :white]]
-      show_update
-
-    when :internet_mode
-      @mode = :internet
-      @bee ||= Beemind.spawn(:bee)
-      @unsubmitted_work_pomodoros.times do
-        @bee.tell(:submit_work_pomodoro)
-      end
-      @unsubmitted_work_pomodoros = 0
-      @prompt = [[" (internet mode)", :white]]
       show_update
 
     when Array
@@ -114,11 +93,7 @@ class Controller < Concurrent::Actor::Context
   end
 
   def accumulation
-    if @mode == :local
-      " (accumulated: #{@unsubmitted_work_pomodoros})"
-    else
-      ''
-    end
+    "; today: #{@work_pomodoros_done_today} poms"
   end
 
   def on_tick
@@ -144,11 +119,6 @@ class Controller < Concurrent::Actor::Context
   def finish_a_work_pomodoro
     @work_pomodoro_periods = 0
     @work_pomodoros_done_today += 1;
-    if (@mode == :internet) && @bee
-      @bee.tell(:submit_work_pomodoro)
-    else
-      @unsubmitted_work_pomodoros += 1
-    end
   end
 
   def counting_pomodoros?
