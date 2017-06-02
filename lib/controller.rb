@@ -70,7 +70,7 @@ class Controller < Concurrent::Actor::Context
     update = if initialized?
       [["time tracker", :white]]
     else
-      [["#{@status}: #{periods_to_minutes(@periods_in_state)} minutes#{pomodoro_proportion}#{accumulation}", state_color]]
+      [["#{@status}: #{periods_to_minutes(@periods_in_state)} minutes#{accumulation}", state_color]]
     end + @prompt
 
     @outputs.each do |output|
@@ -82,14 +82,6 @@ class Controller < Concurrent::Actor::Context
     @status = :disabled
     @outputs.each do |output|
       output.tell [["", :white]]
-    end
-  end
-
-  def pomodoro_proportion
-    if working?
-      " (pom: #{100 * @work_pomodoro_periods / PERIODS_PER_POMODORO}%)"
-    else
-      ''
     end
   end
 
