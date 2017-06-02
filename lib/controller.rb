@@ -1,3 +1,4 @@
+require 'active_support/core_ext/numeric/time'
 
 PERIOD_SECS = 5
 PERIODS_PER_POMODORO = (25 * 60) / PERIOD_SECS
@@ -99,6 +100,10 @@ class Controller < Concurrent::Actor::Context
   def on_tick
     @periods_in_state += 1
 
+    if yesterday?(@time_of_last_work_pomodoro_period)
+      @work_pomodoros_done_today = 0
+    end
+
     if working?
       @work_pomodoro_periods += 1
     end
@@ -155,5 +160,10 @@ class Controller < Concurrent::Actor::Context
       out: '/dev/null',
       err: '/dev/null'
     )
+  end
+
+  def yesterday?(time)
+    # 4am cutoff
+    (time + 4.hours).day != (Time.now + 4.hours).day
   end
 end
