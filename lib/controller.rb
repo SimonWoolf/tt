@@ -116,6 +116,7 @@ class Controller < Concurrent::Actor::Context
   def finish_a_work_pomodoro
     @work_pomodoro_periods = 0
     @work_pomodoros_done_today += 1;
+    @time_of_last_work_pomodoro_period = Time.now
   end
 
   def counting_pomodoros?
