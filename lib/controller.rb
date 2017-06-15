@@ -158,6 +158,6 @@ class Controller < Concurrent::Actor::Context
 
   def yesterday?(time)
     # 4am cutoff
-    (time + 4.hours).day != (Time.now + 4.hours).day
+    (time - 4.hours).day != (Time.now - 4.hours).day
   end
 end
