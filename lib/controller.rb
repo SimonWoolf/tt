@@ -104,11 +104,8 @@ class Controller < Concurrent::Actor::Context
       finish_a_work_pomodoro
     end
 
-    if counting_pomodoros? && @periods_in_state >= PERIODS_PER_POMODORO && @prompt.empty?
-      @prompt = [["take a break", :white]]
-      play_ding
-    elsif break? && @periods_in_state >= PERIODS_PER_BREAK && @prompt.empty?
-      @prompt = [["Break over", :white]]
+    if time_exceeded && @prompt.empty?
+      @prompt = [["⏰", :white]]
       play_ding
     end
   end
@@ -117,6 +114,11 @@ class Controller < Concurrent::Actor::Context
     @work_pomodoro_periods = 0
     @work_pomodoros_done_today += 1;
     @time_of_last_work_pomodoro_period = Time.now
+  end
+
+  def time_exceeded
+    (counting_pomodoros? && @periods_in_state >= PERIODS_PER_POMODORO) ||
+      (break? && @periods_in_state >= PERIODS_PER_BREAK)
   end
 
   def counting_pomodoros?
