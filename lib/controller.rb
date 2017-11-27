@@ -117,12 +117,12 @@ class Controller < Concurrent::Actor::Context
   end
 
   def time_exceeded
-    (counting_pomodoros? && @periods_in_state >= PERIODS_PER_POMODORO) ||
-      (break? && @periods_in_state >= PERIODS_PER_BREAK)
+    (counting_pomodoros? && (@periods_in_state % PERIODS_PER_POMODORO == 0)) ||
+      (break? && ((@periods_in_state - PERIODS_PER_BREAK) % PERIODS_PER_POMODORO == 0))
   end
 
   def counting_pomodoros?
-    working? || non_work?
+    working? || non_work? || procrastinating?
   end
 
   def enough_work?
