@@ -42,6 +42,8 @@ loop do
   when ' '
     controller.tell(:refresh)
   when 'd'
-    controller.tell(:disabled)
+    controller.tell(:deep_work)
+  when 'o'
+    controller.tell(:off)
   end
 end

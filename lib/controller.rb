@@ -22,8 +22,11 @@ class Controller < Concurrent::Actor::Context
     @status = :initialized
     @periods_in_state = 0
     @work_pomodoro_periods = 0
+    @deep_work_pomodoro_periods = 0
     @time_of_last_work_pomodoro_period = Time.now
+    @time_of_last_deep_work_pomodoro_period = Time.now
     @work_pomodoros_done_today = 0
+    @deep_work_pomodoros_done_today = 0
     @prompt = []
 
     @outputs = options[:outputs].map do |output|
@@ -42,7 +45,7 @@ class Controller < Concurrent::Actor::Context
     when :disabled
       disable()
 
-    when :working, :break, :procrastinating, :non_work
+    when :working, :break, :procrastinating, :non_work, :deep_work
       set_status(msg)
 
     when :refresh
@@ -86,7 +89,7 @@ class Controller < Concurrent::Actor::Context
   end
 
   def accumulation
-    "; today: #{@work_pomodoros_done_today} poms"
+    "; today poms: #{@work_pomodoros_done_today} wk #{@deep_work_pomodoros_done_today} dwk"
   end
 
   def on_tick
@@ -96,12 +99,24 @@ class Controller < Concurrent::Actor::Context
       @work_pomodoros_done_today = 0
     end
 
+    if yesterday?(@time_of_last_deep_work_pomodoro_period)
+      @deep_work_pomodoros_done_today = 0
+    end
+
     if working?
       @work_pomodoro_periods += 1
     end
 
+    if deep_work?
+      @deep_work_pomodoro_periods += 1
+    end
+
     if @work_pomodoro_periods >= PERIODS_PER_POMODORO
       finish_a_work_pomodoro
+    end
+
+    if @deep_work_pomodoro_periods >= PERIODS_PER_POMODORO
+      finish_a_deep_work_pomodoro
     end
 
     if time_exceeded && @prompt.empty?
@@ -114,6 +129,12 @@ class Controller < Concurrent::Actor::Context
     @work_pomodoro_periods = 0
     @work_pomodoros_done_today += 1;
     @time_of_last_work_pomodoro_period = Time.now
+  end
+
+  def finish_a_deep_work_pomodoro
+    @deep_work_pomodoro_periods = 0
+    @deep_work_pomodoros_done_today += 1;
+    @time_of_last_deep_work_pomodoro_period = Time.now
   end
 
   def time_exceeded
@@ -143,6 +164,7 @@ class Controller < Concurrent::Actor::Context
     {
       initialized: :white,
       working: :light_green,
+      deep_work: :green,
       break: :light_blue,
       non_work: :light_cyan
     }[@status] || :white
