@@ -119,9 +119,9 @@ class Controller < Concurrent::Actor::Context
       finish_a_deep_work_pomodoro
     end
 
-    if time_exceeded && @prompt.empty?
-      @prompt = [["⏰", :white]]
+    if time_exceeded?
       play_ding
+      @prompt = [["⏰", :white]] if @prompt.empty?
     end
   end
 
@@ -137,7 +137,7 @@ class Controller < Concurrent::Actor::Context
     @time_of_last_deep_work_pomodoro_period = Time.now
   end
 
-  def time_exceeded
+  def time_exceeded?
     (counting_pomodoros? && (@periods_in_state % PERIODS_PER_POMODORO == 0)) ||
       (break? && ((@periods_in_state - PERIODS_PER_BREAK) % PERIODS_PER_POMODORO == 0))
   end
