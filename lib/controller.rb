@@ -45,7 +45,7 @@ class Controller < Concurrent::Actor::Context
     when :disabled
       disable()
 
-    when :working, :break, :procrastinating, :non_work, :deep_work
+    when :working, :break, :procrastinating, :non_work, :deep_work, :off
       set_status(msg)
 
     when :refresh
@@ -70,7 +70,7 @@ class Controller < Concurrent::Actor::Context
   end
 
   def show_update()
-    update = if initialized?
+    update = if initialized? || off?
       [["time tracker", :white]]
     else
       [["#{@status}: #{periods_to_minutes(@periods_in_state)} minutes#{accumulation}", state_color]]
@@ -163,6 +163,7 @@ class Controller < Concurrent::Actor::Context
   def state_color
     {
       initialized: :white,
+      off: :white,
       working: :light_green,
       deep_work: :green,
       break: :light_blue,
