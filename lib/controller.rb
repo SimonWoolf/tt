@@ -89,7 +89,7 @@ class Controller < Concurrent::Actor::Context
   end
 
   def accumulation
-    "; today poms: #{@work_pomodoros_done_today} wk #{@deep_work_pomodoros_done_today} dwk"
+    "; today poms: #{@work_pomodoros_done_today}" + (@deep_work_pomodoros_done_today > 0 ? "wk #{@deep_work_pomodoros_done_today} dwk" : "")
   end
 
   def on_tick
