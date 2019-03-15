@@ -1,8 +1,9 @@
 require 'active_support/core_ext/numeric/time'
 
 PERIOD_SECS = 5
-PERIODS_PER_POMODORO = (25 * 60) / PERIOD_SECS
-PERIODS_PER_BREAK = (5 * 60) / PERIOD_SECS
+PERIODS_PER_POMODORO = (50 * 60) / PERIOD_SECS
+MINUTES_PER_POMODORO = PERIODS_PER_POMODORO * PERIOD_SECS / 60
+PERIODS_PER_BREAK = (15 * 60) / PERIOD_SECS
 DING_SOUND = '/home/simon/dev/dotfiles/pomodoro-finish.wav'
 DING_SPEED = 5
 SLOW_DING_SPEED = 2
@@ -73,7 +74,7 @@ class Controller < Concurrent::Actor::Context
     update = if initialized? || off?
       [["time tracker", :white]]
     else
-      [["#{@status}: #{periods_to_minutes(@periods_in_state)} minutes#{accumulation}", state_color]]
+      [["#{@status}: #{periods_to_minutes(@periods_in_state)}m#{accumulation}", state_color]]
     end + @prompt
 
     @outputs.each do |output|
@@ -89,7 +90,7 @@ class Controller < Concurrent::Actor::Context
   end
 
   def accumulation
-    "; today poms: #{@work_pomodoros_done_today}" + (@deep_work_pomodoros_done_today > 0 ? "wk #{@deep_work_pomodoros_done_today} dwk" : "")
+    "; today: #{@work_pomodoros_done_today * MINUTES_PER_POMODORO}m" + (@deep_work_pomodoros_done_today > 0 ? "wk #{@deep_work_pomodoros_done_today} dwk" : "")
   end
 
   def on_tick
