@@ -6,7 +6,7 @@ MINUTES_PER_POMODORO = PERIODS_PER_POMODORO * PERIOD_SECS / 60
 PERIODS_PER_BREAK = (15 * 60) / PERIOD_SECS
 DING_SOUND = '/home/simon/dev/dotfiles/pomodoro-finish.wav'
 DING_SPEED = 5
-SLOW_DING_SPEED = 2
+SLOW_DING_SPEED = 4
 MAX_DAILY_POMODOROS = 14
 
 def periods_to_minutes(periods)
@@ -55,6 +55,14 @@ class Controller < Concurrent::Actor::Context
     when :info
       @prompt = [payload]
       show_update
+
+    when :ding
+      sleep 5
+      play_ding()
+
+    when :slow_ding
+      sleep 5
+      play_ding(slow: true)
 
     when Array
       on_message(msg[0], msg[1])
@@ -121,7 +129,7 @@ class Controller < Concurrent::Actor::Context
     end
 
     if time_exceeded?
-      play_ding
+      play_ding(slow: break?)
       @prompt = [["⏰", :white]] if @prompt.empty?
     end
   end

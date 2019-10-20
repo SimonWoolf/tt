@@ -41,9 +41,13 @@ loop do
     controller.tell(:procrastinating)
   when ' '
     controller.tell(:refresh)
-  when 'd'
+  when ?d
     controller.tell(:deep_work)
-  when 'o'
+  when ?o
     controller.tell(:off)
+  when ?k
+    controller.tell(:ding)
+  when ?m
+    controller.tell(:slow_ding)
   end
 end
