@@ -49,5 +49,7 @@ loop do
     controller.tell(:ding)
   when ?m
     controller.tell(:slow_ding)
+  when ?t
+    controller.tell(:task)
   end
 end
