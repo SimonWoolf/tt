@@ -2,12 +2,10 @@ require 'active_support/core_ext/numeric/time'
 
 PERIOD_SECS = 5
 PERIODS_PER_POMODORO = (25 * 60) / PERIOD_SECS
-MINUTES_PER_POMODORO = PERIODS_PER_POMODORO * PERIOD_SECS / 60
 PERIODS_PER_BREAK = (5 * 60) / PERIOD_SECS
 DING_SOUND = '/home/simon/dev/dotfiles/pomodoro-finish.wav'
 DING_SPEED = 5
 SLOW_DING_SPEED = 4
-MAX_DAILY_POMODOROS = 14
 
 def periods_to_minutes(periods)
   (periods * PERIOD_SECS) / 60
@@ -22,15 +20,9 @@ class Controller < Concurrent::Actor::Context
 
     @status = :initialized
     @periods_in_state = 0
+    @time_of_last_tick = Time.now
     @work_pomodoro_periods = 0
-    @deep_work_pomodoro_periods = 0
     @task_pomodoro_periods = 0
-    @time_of_last_work_pomodoro_period = Time.now
-    @time_of_last_deep_work_pomodoro_period = Time.now
-    @time_of_last_task_pomodoro_period = Time.now
-    @work_pomodoros_done_today = 0
-    @deep_work_pomodoros_done_today = 0
-    @task_pomodoros_done_today = 0
     @prompt = []
 
     @outputs = options[:outputs].map do |output|
@@ -49,7 +41,7 @@ class Controller < Concurrent::Actor::Context
     when :disabled
       disable()
 
-    when :working, :break, :procrastinating, :non_work, :deep_work, :task, :off
+    when :working, :break, :procrastinating, :non_work, :task, :off
       set_status(msg)
 
     when :refresh
@@ -101,71 +93,32 @@ class Controller < Concurrent::Actor::Context
   end
 
   def accumulation
-    "; today: #{@work_pomodoros_done_today * MINUTES_PER_POMODORO}m" + (@deep_work_pomodoros_done_today > 0 ? "wk #{@deep_work_pomodoros_done_today} dwk" : "") + (@task_pomodoros_done_today > 0 ? "wk #{@task_pomodoros_done_today} task" : "")
+    "; today: #{@work_pomodoro_periods / PERIODS_PER_POMODORO} wk" + (@task_pomodoro_periods > 0 ? ", #{@task_pomodoro_periods / PERIODS_PER_POMODORO} task" : "")
 
   end
 
   def on_tick
     @periods_in_state += 1
 
-    if yesterday?(@time_of_last_work_pomodoro_period)
-      @work_pomodoros_done_today = 0
+    if yesterday?(@time_of_last_tick)
+      @work_pomodoro_periods = 0
+      @task_pomodoro_periods = 0
     end
 
-    if yesterday?(@time_of_last_deep_work_pomodoro_period)
-      @deep_work_pomodoros_done_today = 0
-    end
-
-    if yesterday?(@time_of_last_task_pomodoro_period)
-      @task_pomodoros_done_today = 0
-    end
+    @time_of_last_tick = Time.now
 
     if working?
       @work_pomodoro_periods += 1
-    end
-
-    if deep_work?
-      @deep_work_pomodoro_periods += 1
     end
 
     if task?
       @task_pomodoro_periods += 1
     end
 
-    if @work_pomodoro_periods >= PERIODS_PER_POMODORO
-      finish_a_work_pomodoro
-    end
-
-    if @deep_work_pomodoro_periods >= PERIODS_PER_POMODORO
-      finish_a_deep_work_pomodoro
-    end
-
-    if @task_pomodoro_periods >= PERIODS_PER_POMODORO
-      finish_a_task_pomodoro
-    end
-
     if time_exceeded?
       play_ding(slow: break?)
       @prompt = [["⏰", :white]] if @prompt.empty?
     end
-  end
-
-  def finish_a_work_pomodoro
-    @work_pomodoro_periods = 0
-    @work_pomodoros_done_today += 1;
-    @time_of_last_work_pomodoro_period = Time.now
-  end
-
-  def finish_a_deep_work_pomodoro
-    @deep_work_pomodoro_periods = 0
-    @deep_work_pomodoros_done_today += 1;
-    @time_of_last_deep_work_pomodoro_period = Time.now
-  end
-
-  def finish_a_task_pomodoro
-    @task_pomodoro_periods = 0
-    @task_pomodoros_done_today += 1;
-    @time_of_last_task_pomodoro_period = Time.now
   end
 
   def time_exceeded?
@@ -175,10 +128,6 @@ class Controller < Concurrent::Actor::Context
 
   def counting_pomodoros?
     working? || non_work? || task? || procrastinating?
-  end
-
-  def enough_work?
-    @work_pomodoros_done_today >= MAX_DAILY_POMODOROS
   end
 
   def cls
@@ -196,10 +145,9 @@ class Controller < Concurrent::Actor::Context
       initialized: :white,
       off: :white,
       working: :light_green,
-      deep_work: :green,
       break: :light_blue,
       non_work: :light_cyan,
-      task: :red,
+      task: :green,
     }[@status] || :white
   end
 
