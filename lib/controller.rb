@@ -59,6 +59,9 @@ class Controller < Concurrent::Actor::Context
       sleep 5
       play_ding(slow: true)
 
+    when :add
+      add_5_mins_of_work_periods
+
     when Array
       on_message(msg[0], msg[1])
     end
@@ -95,6 +98,13 @@ class Controller < Concurrent::Actor::Context
   def accumulation
     "; today: #{@work_pomodoro_periods / PERIODS_PER_POMODORO} wk" + (@task_pomodoro_periods > 0 ? ", #{@task_pomodoro_periods / PERIODS_PER_POMODORO} task" : "")
 
+  end
+
+  def add_5_mins_of_work_periods
+    periods_to_add = 5 * 60 / PERIOD_SECS
+    periods_to_add.times do
+      on_tick()
+    end
   end
 
   def on_tick
