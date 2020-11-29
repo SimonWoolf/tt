@@ -54,10 +54,12 @@ class Controller < Concurrent::Actor::Context
     when :ding
       sleep 5
       play_ding()
+      show_notification(false)
 
     when :slow_ding
       sleep 5
       play_ding(slow: true)
+      show_notification(true)
 
     when :add
       add_5_mins_of_work_periods
@@ -127,6 +129,7 @@ class Controller < Concurrent::Actor::Context
 
     if time_exceeded?
       play_ding(slow: break?)
+      show_notification(break?)
       @prompt = [["⏰", :white]] if @prompt.empty?
     end
   end
@@ -169,6 +172,10 @@ class Controller < Concurrent::Actor::Context
       out: '/dev/null',
       err: '/dev/null'
     ))
+  end
+
+  def show_notification(break_end)
+    Process.spawn('notify-send', 'Time tracker', break_end ? 'Break over' : 'End of pomodoro, take a break')
   end
 
   def yesterday?(time)
