@@ -51,5 +51,7 @@ loop do
     controller.tell(:task)
   when ?a
     controller.tell(:add)
+  when ?l
+    controller.tell(:leisure)
   end
 end

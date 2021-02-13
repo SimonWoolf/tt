@@ -23,6 +23,7 @@ class Controller < Concurrent::Actor::Context
     @time_of_last_tick = Time.now
     @work_pomodoro_periods = 0
     @task_pomodoro_periods = 0
+    @leisure_pomodoro_periods = 0
     @prompt = []
 
     @outputs = options[:outputs].map do |output|
@@ -41,7 +42,7 @@ class Controller < Concurrent::Actor::Context
     when :disabled
       disable()
 
-    when :working, :break, :procrastinating, :non_work, :task, :off
+    when :working, :break, :procrastinating, :non_work, :task, :leisure, :off
       set_status(msg)
 
     when :refresh
@@ -98,8 +99,9 @@ class Controller < Concurrent::Actor::Context
   end
 
   def accumulation
-    "; today: #{@work_pomodoro_periods / PERIODS_PER_POMODORO} wk" + (@task_pomodoro_periods > 0 ? ", #{@task_pomodoro_periods / PERIODS_PER_POMODORO} task" : "")
-
+    "; today: #{@work_pomodoro_periods / PERIODS_PER_POMODORO} wk"
+      + (@task_pomodoro_periods > 0 ? ", #{@task_pomodoro_periods / PERIODS_PER_POMODORO} task" : "")
+      + (@leisure_pomodoro_periods > 0 ? ", #{@leisure_pomodoro_periods / PERIODS_PER_POMODORO} leisure" : "")
   end
 
   def add_5_mins_of_work_periods
@@ -115,6 +117,7 @@ class Controller < Concurrent::Actor::Context
     if yesterday?(@time_of_last_tick)
       @work_pomodoro_periods = 0
       @task_pomodoro_periods = 0
+      @leisure_pomodoro_periods = 0
     end
 
     @time_of_last_tick = Time.now
@@ -125,6 +128,10 @@ class Controller < Concurrent::Actor::Context
 
     if task?
       @task_pomodoro_periods += 1
+    end
+
+    if leisure?
+      @leisure_pomodoro_periods += 1
     end
 
     if time_exceeded?
@@ -140,7 +147,7 @@ class Controller < Concurrent::Actor::Context
   end
 
   def counting_pomodoros?
-    working? || non_work? || task? || procrastinating?
+    working? || non_work? || task? || leisure? || procrastinating?
   end
 
   def cls
@@ -161,6 +168,7 @@ class Controller < Concurrent::Actor::Context
       break: :light_blue,
       non_work: :light_cyan,
       task: :green,
+      leisure: :yellow,
     }[@status] || :white
   end
 
