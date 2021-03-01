@@ -99,9 +99,9 @@ class Controller < Concurrent::Actor::Context
   end
 
   def accumulation
-    "; today: #{@work_pomodoro_periods / PERIODS_PER_POMODORO} wk"
-      + (@task_pomodoro_periods > 0 ? ", #{@task_pomodoro_periods / PERIODS_PER_POMODORO} task" : "")
-      + (@leisure_pomodoro_periods > 0 ? ", #{@leisure_pomodoro_periods / PERIODS_PER_POMODORO} leisure" : "")
+    "; today: #{@work_pomodoro_periods / PERIODS_PER_POMODORO} wk" +
+      (@task_pomodoro_periods > 0 ? ", #{@task_pomodoro_periods / PERIODS_PER_POMODORO} task" : "") +
+      (@leisure_pomodoro_periods > 0 ? ", #{@leisure_pomodoro_periods / PERIODS_PER_POMODORO} leisure" : "")
   end
 
   def add_5_mins_of_work_periods
