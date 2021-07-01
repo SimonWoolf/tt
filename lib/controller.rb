@@ -175,7 +175,9 @@ class Controller < Concurrent::Actor::Context
   def play_ding(slow: false)
     speed = slow ? SLOW_DING_SPEED : DING_SPEED
     Process.detach(Process.spawn(
-      'mplayer', DING_SOUND, '-speed', speed.to_s,
+      'mplayer', DING_SOUND,
+      '-speed', speed.to_s,
+      '-volume', '50',
       in: '/dev/null',
       out: '/dev/null',
       err: '/dev/null'
