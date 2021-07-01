@@ -1,8 +1,8 @@
 require 'active_support/core_ext/numeric/time'
 
 PERIOD_SECS = 5
-PERIODS_PER_POMODORO = (25 * 60) / PERIOD_SECS
-PERIODS_PER_BREAK = (5 * 60) / PERIOD_SECS
+PERIODS_PER_POMODORO = (30 * 60) / PERIOD_SECS
+PERIODS_PER_BREAK = (10 * 60) / PERIOD_SECS
 DING_SOUND = '/home/simon/dev/dotfiles/pomodoro-finish.wav'
 DING_SPEED = 5
 SLOW_DING_SPEED = 4
