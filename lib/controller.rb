@@ -1,15 +1,21 @@
 require 'active_support/core_ext/numeric/time'
 
-PERIOD_SECS = 5
-PERIODS_PER_POMODORO = (30 * 60) / PERIOD_SECS
-PERIODS_PER_BREAK = (10 * 60) / PERIOD_SECS
-DING_SOUND = '/home/simon/dev/dotfiles/pomodoro-finish.wav'
-DING_SPEED = 5
-SLOW_DING_SPEED = 4
-
 def periods_to_minutes(periods)
   (periods * PERIOD_SECS) / 60
 end
+def minutes_to_periods(minutes)
+  (minutes * 60) / PERIOD_SECS
+end
+
+
+PERIOD_SECS = 5
+PERIODS_PER_POMODORO = minutes_to_periods(30)
+PERIODS_PER_BREAK = minutes_to_periods(10)
+WORK_PERIODS_TO_SAT = minutes_to_periods(4 * 60)
+WORK_PERIODS_TO_OVERSAT = minutes_to_periods(6 * 60)
+DING_SOUND = '/home/simon/dev/dotfiles/pomodoro-finish.wav'
+DING_SPEED = 3
+SLOW_DING_SPEED = 2
 
 class Controller < Concurrent::Actor::Context
   def initialize(options)
@@ -55,12 +61,12 @@ class Controller < Concurrent::Actor::Context
     when :ding
       sleep 5
       play_ding()
-      show_notification(false)
+      show_notification('ding')
 
     when :slow_ding
       sleep 5
       play_ding(slow: true)
-      show_notification(true)
+      show_notification('slow ding')
 
     when :add
       add_5_mins_of_work_periods
@@ -83,7 +89,7 @@ class Controller < Concurrent::Actor::Context
     update = if initialized? || off?
       [["time tracker", :white]]
     else
-      [["#{@status}: #{periods_to_minutes(@periods_in_state)}m#{accumulation}", state_color]]
+      [["#{@status} #{periods_to_minutes(@periods_in_state)}m#{accumulation}", state_color]]
     end + @prompt
 
     @outputs.each do |output|
@@ -99,13 +105,27 @@ class Controller < Concurrent::Actor::Context
   end
 
   def accumulation
-    "; today: #{@work_pomodoro_periods / PERIODS_PER_POMODORO} wk" +
-      (@task_pomodoro_periods > 0 ? ", #{@task_pomodoro_periods / PERIODS_PER_POMODORO} task" : "") +
-      (@leisure_pomodoro_periods > 0 ? ", #{@leisure_pomodoro_periods / PERIODS_PER_POMODORO} leisure" : "")
+    "; today: #{periods_to_minutes(@work_pomodoro_periods)}m" +
+      (@leisure_pomodoro_periods > 0 ? ", #{periods_to_minutes(@leisure_pomodoro_periods)}m leisure" : "") +
+      if oversatisfied?
+        ": 🟥 oversatisfied"
+      elsif satisfied?
+        ": 🔵 satisfied"
+      else
+        ""
+      end
+  end
+
+  def oversatisfied?
+    @work_pomodoro_periods > WORK_PERIODS_TO_OVERSAT
+  end
+
+  def satisfied?
+    @work_pomodoro_periods > WORK_PERIODS_TO_SAT
   end
 
   def add_5_mins_of_work_periods
-    periods_to_add = 5 * 60 / PERIOD_SECS
+    periods_to_add = minutes_to_periods(5)
     periods_to_add.times do
       on_tick()
     end
@@ -134,20 +154,15 @@ class Controller < Concurrent::Actor::Context
       @leisure_pomodoro_periods += 1
     end
 
-    if time_exceeded?
-      play_ding(slow: break?)
-      show_notification(break?)
-      @prompt = [["⏰", :white]] if @prompt.empty?
+    if working? && (@work_pomodoro_periods === WORK_PERIODS_TO_SAT)
+      play_ding(slow: false)
+      show_notification('Satisfied obligation')
     end
-  end
 
-  def time_exceeded?
-    (counting_pomodoros? && (@periods_in_state % PERIODS_PER_POMODORO == 0)) ||
-      (break? && ((@periods_in_state - PERIODS_PER_BREAK) % PERIODS_PER_POMODORO == 0))
-  end
-
-  def counting_pomodoros?
-    working? || non_work? || task? || leisure? || procrastinating?
+    if working? && (@work_pomodoro_periods === WORK_PERIODS_TO_OVERSAT)
+      play_ding(slow: true)
+      show_notification('Oversatisfied obligation')
+    end
   end
 
   def cls
@@ -161,15 +176,24 @@ class Controller < Concurrent::Actor::Context
   end
 
   def state_color
-    {
-      initialized: :white,
-      off: :white,
-      working: :light_green,
-      break: :light_blue,
-      non_work: :light_cyan,
-      task: :green,
-      leisure: :yellow,
-    }[@status] || :white
+    if working?
+      if oversatisfied?
+        :lightcoral
+      elsif satisfied?
+        :lightseagreen
+      else
+        :light_green
+      end
+    else
+      {
+        initialized: :white,
+        off: :white,
+        break: :light_blue,
+        non_work: :light_cyan,
+        task: :green,
+        leisure: :yellow,
+      }[@status] || :white
+    end
   end
 
   def play_ding(slow: false)
@@ -177,15 +201,15 @@ class Controller < Concurrent::Actor::Context
     Process.detach(Process.spawn(
       'mplayer', DING_SOUND,
       '-speed', speed.to_s,
-      '-volume', '50',
+      '-volume', '60',
       in: '/dev/null',
       out: '/dev/null',
       err: '/dev/null'
     ))
   end
 
-  def show_notification(break_end)
-    Process.spawn('notify-send', 'Time tracker', break_end ? 'Break over' : 'End of pomodoro, take a break')
+  def show_notification(text)
+    Process.spawn('notify-send', 'Time tracker', text)
   end
 
   def yesterday?(time)
