@@ -3,10 +3,19 @@ require 'active_support/core_ext/numeric/time'
 def periods_to_minutes(periods)
   (periods * PERIOD_SECS) / 60
 end
+
 def minutes_to_periods(minutes)
   (minutes * 60) / PERIOD_SECS
 end
 
+def periods_to_hmstr(periods)
+  hours, minutes = periods_to_minutes(periods).divmod(60)
+  if hours == 0
+    "#{minutes}m"
+  else
+    "#{hours}h#{minutes}m"
+  end
+end
 
 PERIOD_SECS = 5
 PERIODS_PER_POMODORO = minutes_to_periods(30)
@@ -89,7 +98,7 @@ class Controller < Concurrent::Actor::Context
     update = if initialized? || off?
       [["time tracker", :white]]
     else
-      [["#{@status} #{periods_to_minutes(@periods_in_state)}m#{accumulation}", state_color]]
+      [["#{@status} #{periods_to_hmstr(@periods_in_state)}#{accumulation}", state_color]]
     end + @prompt
 
     @outputs.each do |output|
@@ -105,8 +114,8 @@ class Controller < Concurrent::Actor::Context
   end
 
   def accumulation
-    "; today: #{periods_to_minutes(@work_pomodoro_periods)}m" +
-      (@leisure_pomodoro_periods > 0 ? ", #{periods_to_minutes(@leisure_pomodoro_periods)}m leisure" : "") +
+    "; today: #{periods_to_hmstr(@work_pomodoro_periods)}" +
+      (@leisure_pomodoro_periods > 0 ? ", #{periods_to_hmstr(@leisure_pomodoro_periods)} leisure" : "") +
       if oversatisfied?
         ": 🟥 oversatisfied"
       elsif satisfied?
