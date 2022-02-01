@@ -119,7 +119,7 @@ class Controller < Concurrent::Actor::Context
       if oversatisfied?
         ": 🟥 oversatisfied"
       elsif satisfied?
-        ": 🔵 satisfied"
+        ": 🟠 satisfied"
       else
         ""
       end
@@ -187,11 +187,11 @@ class Controller < Concurrent::Actor::Context
   def state_color
     if working?
       if oversatisfied?
-        :lightcoral
+        "#ff9900"
       elsif satisfied?
-        :lightseagreen
+        "#ffcc00"
       else
-        :light_green
+        "#ffff00"
       end
     else
       {
@@ -200,7 +200,7 @@ class Controller < Concurrent::Actor::Context
         break: :light_blue,
         non_work: :light_cyan,
         task: :green,
-        leisure: :yellow,
+        leisure: :light_green,
       }[@status] || :white
     end
   end

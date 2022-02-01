@@ -20,6 +20,10 @@ class I3statusFileOutput < Concurrent::Actor::Context
   end
 
   def to_hex_string(colour)
-    Color::CSS[colour.to_s.gsub(/_/, '')].html
+    if colour.is_a? Symbol
+      Color::CSS[colour.to_s.gsub(/_/, '')].html
+    else
+      colour
+    end
   end
 end
