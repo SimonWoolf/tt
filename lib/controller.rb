@@ -144,15 +144,16 @@ class Controller < Concurrent::Actor::Context
   end
 
   def accumulation
-    "; today: #{periods_to_hmstr(@work_pomodoro_periods)}" +
-      (@leisure_pomodoro_periods > 0 ? ", #{periods_to_hmstr(@leisure_pomodoro_periods)} leisure" : "") +
+    "; work today: #{periods_to_hmstr(@work_pomodoro_periods)}" +
       if oversatisfied?
-        ": 🟥 oversatisfied"
+        " (🟥 oversatisfied)"
       elsif satisfied?
-        ": 🟠 satisfied"
+        " (: 🟠 satisfied)"
       else
         ""
-      end
+      end +
+      (@leisure_pomodoro_periods > 0 ? ", leisure today: #{periods_to_hmstr(@leisure_pomodoro_periods)}" : "") +
+      (@task_pomodoro_periods > 0 ? ", task today: #{periods_to_hmstr(@task_pomodoro_periods)}" : "")
   end
 
   def oversatisfied?
