@@ -52,7 +52,9 @@ class Controller < Concurrent::Actor::Context
   end
 
   def init_work_by_day_file
-    f = @work_by_day_file = File.open(WORK_DURATION_BY_DAY_FILEPATH, 'r+')
+    f = @work_by_day_file || (
+      @work_by_day_file = File.open(WORK_DURATION_BY_DAY_FILEPATH, 'r+')
+    )
     today = Date.today.to_s
     date_length = 10
     lines = f.readlines
@@ -64,6 +66,7 @@ class Controller < Concurrent::Actor::Context
       # no existing date
       f.write("\n#{today} ")
       @work_by_day_file_pos = f.pos
+      f.write("\n")
     end
   end
 
@@ -174,6 +177,7 @@ class Controller < Concurrent::Actor::Context
       @work_pomodoro_periods = 0
       @task_pomodoro_periods = 0
       @leisure_pomodoro_periods = 0
+      init_work_by_day_file()
     end
 
     @time_of_last_tick = Time.now
