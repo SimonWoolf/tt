@@ -230,11 +230,11 @@ class Controller < Concurrent::Actor::Context
   def state_color
     if working?
       if oversatisfied?
-        "#ff9900"
+        :red
       elsif satisfied?
-        "#ffcc00"
+        :orange
       else
-        "#ffff00"
+        :yellow
       end
     else
       {
