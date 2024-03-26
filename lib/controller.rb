@@ -71,7 +71,9 @@ class Controller < Concurrent::Actor::Context
   end
 
   def init_work_pom_periods(hmstr)
-    match_data = hmstr.match(/(?:(\d{1,2})h)?(\d{2})m/)
+    puts hmstr
+    match_data = hmstr.match(/(?:(\d{1,2})h)?(\d{1,2})m/)
+    puts match_data
     h, m = match_data.captures
     @work_pomodoro_periods = minutes_to_periods((h || '0').to_i * 60 + m.to_i)
   end
