@@ -21,7 +21,7 @@ end
 
 PERIOD_SECS = 5
 PERIODS_PER_POMODORO = minutes_to_periods(30)
-PERIODS_PER_BREAK = minutes_to_periods(10)
+PERIODS_PER_BREAK = minutes_to_periods(20)
 WORK_PERIODS_TO_SAT = minutes_to_periods(4 * 60)
 WORK_PERIODS_TO_OVERSAT = minutes_to_periods(8 * 60)
 DING_SOUND = '/home/simon/dev/dotfiles/pomodoro-finish.wav'
@@ -198,13 +198,21 @@ class Controller < Concurrent::Actor::Context
     end
 
     if working? && (@work_pomodoro_periods === WORK_PERIODS_TO_SAT)
-      play_ding(slow: false)
       show_notification('Satisfied obligation')
     end
 
     if working? && (@work_pomodoro_periods === WORK_PERIODS_TO_OVERSAT)
-      play_ding(slow: true)
       show_notification('Oversatisfied obligation')
+    end
+
+    if working? && (@periods_in_state % PERIODS_PER_POMODORO == 0)
+      play_ding(slow: false)
+      show_notification('Pomodoro completed')
+    end
+
+    if break? && (@periods_in_state == PERIODS_PER_BREAK)
+      play_ding(slow: true)
+      show_notification('Break completed')
     end
 
     write_work_by_day_to_file
@@ -231,18 +239,23 @@ class Controller < Concurrent::Actor::Context
 
   def state_color
     if working?
-      if oversatisfied?
+      if @periods_in_state >= PERIODS_PER_POMODORO
         :red
       elsif satisfied?
         :orange
       else
         :yellow
       end
+    elsif break?
+      if @periods_in_state >= PERIODS_PER_BREAK
+        :red
+      else
+        :light_blue
+      end
     else
       {
         initialized: :white,
         off: :white,
-        break: :light_blue,
         non_work: :light_cyan,
         task: :green,
         leisure: :light_green,
