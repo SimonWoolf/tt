@@ -240,8 +240,6 @@ class Controller < Concurrent::Actor::Context
   def state_color
     if working?
       if @periods_in_state >= PERIODS_PER_POMODORO
-        :darkorange
-      elsif satisfied?
         :orange
       else
         :yellow
