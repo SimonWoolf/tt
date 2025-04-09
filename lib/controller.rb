@@ -20,6 +20,7 @@ def periods_to_hmstr(periods)
 end
 
 PERIOD_SECS = 5
+PERIODS_PER_MINUTE = 60 / PERIOD_SECS
 PERIODS_PER_POMODORO = minutes_to_periods(30)
 PERIODS_PER_BREAK = minutes_to_periods(20)
 WORK_PERIODS_TO_SAT = minutes_to_periods(4 * 60)
@@ -100,12 +101,10 @@ class Controller < Concurrent::Actor::Context
       show_update
 
     when :ding
-      sleep 5
       play_ding()
       show_notification('ding')
 
     when :slow_ding
-      sleep 5
       play_ding(slow: true)
       show_notification('slow ding')
 
@@ -206,12 +205,14 @@ class Controller < Concurrent::Actor::Context
     end
 
     if working? && (@periods_in_state % PERIODS_PER_POMODORO == 0)
-      play_ding(slow: false)
       show_notification('Pomodoro completed')
     end
 
+    if working? && (@periods_in_state == PERIODS_PER_POMODORO + PERIODS_PER_MINUTE)
+      prompt_to_meditate()
+    end
+
     if break? && (@periods_in_state == PERIODS_PER_BREAK)
-      play_ding(slow: true)
       show_notification('Break completed')
     end
 
@@ -271,6 +272,20 @@ class Controller < Concurrent::Actor::Context
       out: '/dev/null',
       err: '/dev/null'
     ))
+  end
+
+  def prompt_to_meditate()
+    show_question('have you meditated for at least 1 minute?')
+  end
+
+  def show_question(text)
+    # zenity --question --text ""
+    Process.spawn(
+      'zenity', '--question',
+      '--text', text,
+      '--ok-label', 'yes',
+      '--cancel-label', 'no',
+    )
   end
 
   def show_notification(text)
