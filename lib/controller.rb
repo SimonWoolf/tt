@@ -208,10 +208,6 @@ class Controller < Concurrent::Actor::Context
       show_notification('Pomodoro completed')
     end
 
-    if working? && (@periods_in_state == PERIODS_PER_POMODORO + PERIODS_PER_MINUTE)
-      prompt_to_meditate()
-    end
-
     if break? && (@periods_in_state == PERIODS_PER_BREAK)
       show_notification('Break completed')
     end
@@ -272,10 +268,6 @@ class Controller < Concurrent::Actor::Context
       out: '/dev/null',
       err: '/dev/null'
     ))
-  end
-
-  def prompt_to_meditate()
-    show_question('have you meditated for at least 1 minute?')
   end
 
   def show_question(text)
