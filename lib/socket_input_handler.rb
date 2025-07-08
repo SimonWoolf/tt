@@ -3,7 +3,7 @@ SOCKET_PATH = "/tmp/tt.sock"
 
 class SocketInputHandler
   def initialize()
-    if File.exists?(SOCKET_PATH) && File.socket?(SOCKET_PATH)
+    if File.exist?(SOCKET_PATH) && File.socket?(SOCKET_PATH)
       File.unlink(SOCKET_PATH)
     end
 

@@ -40,6 +40,6 @@ class I3statusFileOutput < Concurrent::Actor::Context
       darkorange: "#ff8c00",
       yellow: "#ffff00",
     }[colour] ||
-      Color::CSS[colour.to_s.gsub(/_/, '')].html
+      Color::RGB.by_name(colour.to_s.gsub(/_/, '')).html
   end
 end
