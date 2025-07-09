@@ -1,0 +1,59 @@
+#!/usr/bin/env ruby
+require 'ruby_llm'
+require 'io/console'
+
+RubyLLM.configure do |config|
+  config.anthropic_api_key = ENV.fetch('ANTHROPIC_API_KEY_PERSONAL', nil)
+  config.openai_api_key = ENV.fetch('OPENAI_API_KEY', nil)
+  config.default_model = "claude-sonnet-4"
+end
+
+model = "claude-sonnet-4"
+
+def clear_screen
+  print "\e[H\e[2J"
+end
+
+chat = RubyLLM.chat()
+prompt = <<~PROMPT
+  You are an accountability buddy helping someone take an intentional break from work.
+  They will tell you what they plan on doing during this break. Your job is to
+  make sure that they're doing something they endorse, and to make it
+  reasonably time-limited. The user should avoid dopamine-loop type activities
+  (endless bullet chess, youtube-shorts, etc), especially unbounded ones, in
+  favour of things that will actually refresh them. They should have a specific
+  thing that will trigger them to come back to work. Your job is to make sure
+  that this is the case!
+
+  After you are satisfied of this, give a brief supportive response, wish them
+  a good break, and end the conversation.
+PROMPT
+
+chat.with_instructions(prompt, replace: true)
+
+clear_screen
+arg = ARGV
+puts "### arg: #{arg.inspect}"
+puts "=== Break Check-in ==="
+puts "What are you planning on doing in your break?\n"
+
+loop do
+  begin
+    print "\n> "
+    user_input = STDIN.gets&.chomp
+    break if user_input.nil? || user_input.empty?
+
+    response = chat.ask(user_input)
+    puts "\n#{response.content}"
+
+  rescue RubyLLM::OverloadedError
+    # poor claude :'(
+    puts "(switching to gpt-4.1-mini)"
+    chat.with_model('gpt-4.1-mini')
+    response = chat.ask(user_input)
+    puts "\n#{response.content}"
+  rescue Interrupt
+    puts "\n\nCheck-in cancelled."
+    break
+  end
+end
