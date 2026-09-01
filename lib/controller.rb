@@ -122,10 +122,6 @@ class Controller < Concurrent::Actor::Context
       @periods_in_state = 0
       @prompt = []
       show_update
-
-      if break?
-        launch_break_checkin
-      end
     end
   end
 
@@ -291,11 +287,5 @@ class Controller < Concurrent::Actor::Context
   def yesterday?(time)
     # 4am cutoff
     (time - 4.hours).day != (Time.now - 4.hours).day
-  end
-
-  def launch_break_checkin
-    Process.spawn('alacritty -e breakcheck --initial')
-  rescue => e
-    puts "Error launching break check-in: #{e.message}"
   end
 end
